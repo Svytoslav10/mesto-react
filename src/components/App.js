@@ -43,17 +43,17 @@ function App() {
           <Footer />
       </div>
 
-      <PopupWithForm isOpen={isEditAvatarPopupOpen} onClose={closeAllPopups} title="Обновить аватар" text="Сохранить">
+      <PopupWithForm isOpen={isEditAvatarPopupOpen} onClose={closeAllPopups} title="Обновить аватар" text="Сохранить" name="avatar">
             <input
-              className="popup__input popup__input_type_url"
-              type="url"
-              id="avatar"
-              name="avatar"
-              placeholder="Ссылка на картинку" required />
+            className="popup__input popup__input_type_url"
+            type="url"
+            id="avatar"
+            name="avatar"
+            placeholder="Ссылка на картинку" required />
             <span className="error" id="avatar-error"></span>
       </PopupWithForm>
 
-      <PopupWithForm isOpen={isEditProfilePopupOpen} onClose={closeAllPopups} title="Редактировать профиль" text="Сохранить">
+      <PopupWithForm isOpen={isEditProfilePopupOpen} onClose={closeAllPopups} title="Редактировать профиль" text="Сохранить" name="editProfile">
             <input
             type="text"
             required
@@ -78,7 +78,7 @@ function App() {
 
       </PopupWithForm>
 
-      <PopupWithForm title="Новое место" isOpen={isAddPlacePopupOpen} onClose={closeAllPopups} text="Создать">
+      <PopupWithForm title="Новое место" isOpen={isAddPlacePopupOpen} onClose={closeAllPopups} text="Создать" name="addPicture">
             <input
             type="text"
             required
@@ -102,9 +102,7 @@ function App() {
             <span className="error" id="link-error"></span>
       </PopupWithForm>
 
-      <PopupWithForm className="popup popup_type_delete-card">
-            <button className="popup__button-save" type="submit">Да</button>
-      </PopupWithForm>
+      <PopupWithForm className="popup popup_type_delete-card" text="Да" title="Вы уверены?" onClose={closeAllPopups} name="card" />
 
       <ImagePopup card = {selectedCard} onClose={closeAllPopups}/>
 
