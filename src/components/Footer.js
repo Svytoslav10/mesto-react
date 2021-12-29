@@ -1,6 +1,6 @@
 function Footer(){
 
-    let today = new Date().getFullYear();
+    const today = new Date().getFullYear();
 
     return(
     <footer className="footer">
