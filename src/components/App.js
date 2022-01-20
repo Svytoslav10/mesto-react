@@ -11,8 +11,8 @@ import api from '../utils/api';
 
 
 function App() {
-  const [isEditAvatarPopupOpen, setEditAvatarPopupOpen] = React.useState(false);
-  const [isEditProfilePopupOpen, setEditProfilePopupOpen] = React.useState(false);
+  const [isEditAvatarPopupOpen, setIsEditAvatarPopupOpen] = React.useState(false);
+  const [isEditProfilePopupOpen, setIsEditProfilePopupOpen] = React.useState(false);
   const [isAddPlacePopupOpen, setAddPlacePopupOpen] = React.useState(false);
   const [selectedCard, setSelectedCard] = React.useState({name: '', link: ''});
   const [currentUser, setCurrentUser] = React.useState({});
@@ -57,7 +57,7 @@ function App() {
     }
     document.addEventListener('mousedown', heandleOverlay)
       return () => {
-        document.removeEventListener('keydown', heandleOverlay);
+        document.removeEventListener('mousedown', heandleOverlay);
       }
   }, [])
   
@@ -89,15 +89,16 @@ function App() {
     // Отправляем запрос в API и получаем обновлённые данные карточки
     api.changeLikeCardStatus(card._id, !isLiked).then((newCard) => {
       setCards((state) => state.map((c) => c._id === card._id ? newCard : c));
-    });
+    }).catch((err) =>
+    console.log(`Ошибка: ${err}`));
   }
 
-  function handleCardDelete(card) {      
-    api.deleteCard(card._id).then(() => {
-      const newCards = cards.filter((c) => c._id !== card._id);
-      setCards(newCards)
-    }).catch((err) => console.log(`Ошибка: ${err}`));
-  }
+  function handleCardDelete(card) {       
+    api.deleteCard(card._id).then(() => { 
+      setCards((state) => state.filter((c) => c._id !== card._id));
+    }).catch((err) => console.log(`Ошибка: ${err}`)); 
+
+  } 
 
   function handleAddPlaceSubmit({name, link}) {
     api.addNewCard({name, link})
@@ -110,18 +111,18 @@ function App() {
   }
 
   function closeAllPopups(){
-    setEditAvatarPopupOpen(false);
-    setEditProfilePopupOpen(false); 
+    setIsEditAvatarPopupOpen(false);
+    setIsEditProfilePopupOpen(false); 
     setAddPlacePopupOpen(false);
     setSelectedCard({name:'', link:''});
   }
 
   function handleEditAvatarClick(){
-    setEditAvatarPopupOpen(!isEditAvatarPopupOpen)
+    setIsEditAvatarPopupOpen(!isEditAvatarPopupOpen)
   }
 
   function handleEditProfileClick(){
-    setEditProfilePopupOpen(!isEditProfilePopupOpen) 
+    setIsEditProfilePopupOpen(!isEditProfilePopupOpen) 
   }
 
   function handleAddPlaceClick(){
