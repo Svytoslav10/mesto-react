@@ -8,7 +8,12 @@ import AddPlacePopup from './AddPlacePopup';
 import ImagePopup from './ImagePopup';
 import CurrentUserContext from '../contexts/CurrentUserContext';
 import api from '../utils/api';
-
+import { Route, Switch, useHistory, Redirect } from 'react-router-dom';
+import ProtectedRoute from './ProtectedRoute';
+import Login from './Login';
+import Register from './Register';
+import InfoTooltip from './InfoTooltip'
+import * as auth from '../utils/auth';
 
 function App() {
   const [isEditAvatarPopupOpen, setIsEditAvatarPopupOpen] = React.useState(false);
@@ -17,6 +22,15 @@ function App() {
   const [selectedCard, setSelectedCard] = React.useState({name: '', link: ''});
   const [currentUser, setCurrentUser] = React.useState({});
   const [cards, setCards] = React.useState([]);
+  //Hook авторизации пользователя
+  const [loggedIn, setLoggedIn] = React.useState(false);
+  //Hook состояния открытия popup с оповещением при авторизации
+  const [isInfoTooltipOpen, setIsInfoTooltipOpen] = React.useState(false);
+  //Hook сообщения успеха / неудачи
+  const [message, setMessage] = React.useState(false);
+  //Hook получения email пользователя
+  const [email, setEmail] = React.useState('');
+  const history = useHistory();
 
   React.useEffect(() => {
     api.getUserInfo()
@@ -115,6 +129,7 @@ function App() {
     setIsEditProfilePopupOpen(false); 
     setAddPlacePopupOpen(false);
     setSelectedCard({name:'', link:''});
+    setIsInfoTooltipOpen(false);
   }
 
   function handleEditAvatarClick(){
@@ -133,12 +148,84 @@ function App() {
     setSelectedCard(card);
   }
 
+  function handleInfoTooltip() {
+    setIsInfoTooltipOpen(true);
+  }
+
+  function handleRegistr(email, password) {
+    auth.register(email, password)
+      .then(() => {
+        handleInfoTooltip();
+        setMessage(true);
+        history.push('/sign-in');
+      })
+      .catch(() => {
+        if (400) {
+          console.log("400 - некорректно заполнено одно из полей");
+        }
+        handleInfoTooltip();
+        setMessage(false);
+      });
+    }  
+
+  function onLogin(email, password) {
+    auth.login(email, password)
+      .then((res) => {
+        if(res) {
+          setLoggedIn(true);
+          setEmail(email);
+          history.push('/');
+          localStorage.setItem('jwt', res.token);
+        }
+      })
+      .catch(() => {
+        if(401){
+          console.log("401 - пользователь с email не найден");
+        }else if(400){
+          console.log("400 - не передано одно из полей");
+        }
+        setMessage(false);
+        handleInfoTooltip();
+      });
+  }
+
+  //Hook для проверки токена
+  React.useEffect(() => {
+    const jwt = localStorage.getItem("jwt");
+    //проверим существует ли токен в localStorage
+    if (jwt) {
+      auth.checkToken(jwt)
+        .then((res) => {
+          setLoggedIn(true);
+          setEmail(res.data.email);
+          history.push('/');
+        })
+        .catch(() => {
+          if (401) {
+            console.log("400 — Токен не передан или передан не в том формате");
+          }
+          console.log("401 — Переданный токен некорректен");
+        });
+    }
+  }, [history]);
+
+  function logout() {
+    localStorage.removeItem('jwt');
+    history.push('/sign-in');
+    setLoggedIn(false);
+  }
+
+
   return (
     <CurrentUserContext.Provider value={currentUser}>
     <div>
       <div className="page">
-          <Header />
-          <Main 
+          <Header email={email} logout={logout}/>
+          <Switch>
+          <ProtectedRoute
+          exact path="/"
+          component={Main}
+          loggedIn={loggedIn}
           onEditAvatar={handleEditAvatarClick} 
           onEditProfile={handleEditProfileClick} 
           onAddPlace={handleAddPlaceClick} 
@@ -146,7 +233,19 @@ function App() {
           onCardClick={handleCardClick}
           onCardLike={handleCardLike}
           onUpdateUser={handleUpdateUser}
-          cards={cards}/>
+          cards={cards}
+          />
+          <Route path="/sign-up">
+            <Register onRegister={handleRegistr}/>
+          </Route>
+          <Route path="/sign-in">
+            <Login onLogin={onLogin}/>
+          </Route>
+          <Route>
+            {loggedIn ? <Redirect to="/" /> : <Redirect to="/sign-up"/>}
+          </Route>
+          </Switch>
+
           <Footer />
       </div>
       
@@ -154,9 +253,11 @@ function App() {
 
       <EditProfilePopup isOpen={isEditProfilePopupOpen} onClose={closeAllPopups} onUpdateUser={handleUpdateUser} />
 
-      <AddPlacePopup isOpen={isAddPlacePopupOpen} onClose={closeAllPopups} onAddPlace={handleAddPlaceSubmit}/>
+      <AddPlacePopup isOpen={isAddPlacePopupOpen} onClose={closeAllPopups} onAddPlace={handleAddPlaceSubmit} />
 
-      <ImagePopup card = {selectedCard} onClose={closeAllPopups}/>
+      <ImagePopup card = {selectedCard} onClose={closeAllPopups} />
+
+      <InfoTooltip isOpen={isInfoTooltipOpen} onClose={closeAllPopups} status={message} />
 
     </div>
     </CurrentUserContext.Provider>
